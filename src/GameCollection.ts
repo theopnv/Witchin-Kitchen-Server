@@ -1,15 +1,14 @@
 import { Game } from './Game';
-import { GameCreationInfo } from './Models/GameCreationInfo';
 
 export class GameCollection {
-    private totalgameCount: number;
     private readonly gameDict: Map<string, Game>;
     private readonly gameNames: Map<string, string>;
+    private readonly gameNotStarted: Set<string>;
 
     constructor() {
-        this.totalgameCount = 0;
         this.gameDict = new Map<string, Game>();
         this.gameNames = new Map<string, string>();
+        this.gameNotStarted = new Set<string>();
     }
 
     getGameDict() : Map<string, Game> {
@@ -19,6 +18,11 @@ export class GameCollection {
     add(game: Game) {
         this.gameDict.set(game.host, game);
         this.gameNames.set(game.gameName, game.host);
+        this.gameNotStarted.add(game.gameName);
+    }
+
+    gameStarted(name: string) {
+        this.gameNotStarted.delete(name);
     }
 
     getGameOfHost(host: string) : Game {
@@ -31,7 +35,7 @@ export class GameCollection {
 
     getGameByName(name: string) : Game {
         let game: Game = null;
-        if (this.gameNames.has(name)) {
+        if (this.gameNotStarted.has(name)) {
             let host = this.gameNames.get(name);
             game = this.gameDict.get(host);
         }
