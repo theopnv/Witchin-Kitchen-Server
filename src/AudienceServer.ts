@@ -7,6 +7,7 @@ import { GameCollection } from './GameCollection';
 import { Game } from './Game';
 import { ExtendedSocket } from './ExtendedSocket';
 import { GameCreationInfo } from './Models/GameCreationInfo';
+import { LobbyGames } from './Models/LobbyGames';
 
 //import { Message } from './model';
 
@@ -79,7 +80,7 @@ export class AudienceServer {
             this.gameCollection.add(gameObject);
             socket.join(gameObject.gameName);
             console.log("Game Created by " + socket.username + " w/ " + gameObject.gameName);
-            this.io.emit('gameCreated', gameObject);
+            socket.emit('gameCreated', gameObject);
         });
     }
 
@@ -95,10 +96,28 @@ export class AudienceServer {
             });
 
             socket.on('registerAsAudience', (user: User) => {
-                console.log('[server](New Host registered): %s', user.name);
+                console.log('[server](New Audience registered): %s', user.name);
                 socket.username = user.name;
-                let message = new Message(new User(AudienceServer.SERVER_NAME), 'successfully registered as host');
-                this.io.emit('message', message);
+                let message = new Message(new User(AudienceServer.SERVER_NAME), 'successfully registered as audience');
+                socket.emit('message', message);
+            });
+
+            socket.on('refreshLobby', () => {
+                let gameNameArray = this.gameCollection.getGameListNames();
+                socket.emit('lobby', new LobbyGames(gameNameArray))
+            });
+
+            socket.on('joinGame', (message: Message) => {
+                let game = this.gameCollection.getGameByName(message.content);
+                if (!game) {
+                    let message = new Message(new User(AudienceServer.SERVER_NAME), 'game does not exist');
+                    socket.emit('gameJoinError', message);
+                    return;
+                }
+                socket.join(game.gameName);
+                console.log(socket.username + " joined " + game.gameName);
+                let answer = new Message(new User(AudienceServer.SERVER_NAME), 'game joined successfully');
+                socket.emit('gameJoined', answer);
             });
 
             this.makeGame(socket);
