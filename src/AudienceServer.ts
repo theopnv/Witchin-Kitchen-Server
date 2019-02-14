@@ -8,6 +8,8 @@ import { Game } from './Game';
 import { ExtendedSocket } from './ExtendedSocket';
 import { GameCreationInfo } from './Models/GameCreationInfo';
 import { LobbyGames } from './Models/LobbyGames';
+import { Players } from './Models/Players';
+import { PlayerCollection } from './Models/PlayerCollection';
 
 //import { Message } from './model';
 
@@ -20,6 +22,7 @@ export class AudienceServer {
     private lobby: socketIo.Namespace;
     private port: string | number;
     private gameCollection: GameCollection;
+    private playersInGame: PlayerCollection;
 
     constructor() {
         this.createApp();
@@ -28,6 +31,7 @@ export class AudienceServer {
         this.sockets();
         this.listen();
         this.gameCollection = new GameCollection();
+        this.playersInGame = new PlayerCollection();
     }
 
     private createApp(): void {
@@ -58,24 +62,19 @@ export class AudienceServer {
 
     private makeGame(socket: ExtendedSocket) {
         socket.on('makeGame', () => {
-            if (!socket.username) {
-                let message = new Message(new User(AudienceServer.SERVER_NAME), "Please register your username before.");
-                socket.emit('gameCreationError', message);
-                return;
-            }
-            let gameOfHost = this.gameCollection.getGameOfHost(socket.username);
+            let gameOfHost = this.gameCollection.getGameOfHost(socket.id);
             if (gameOfHost) {
-                console.log("User " + socket.username + " tried to make a game but has already one !");
+                console.log("User " + socket.id + " tried to make a game but has already one !");
                 let message = new Message(new User(AudienceServer.SERVER_NAME), "You already created a game.");
-                socket.emit('gameCreationError', message);
+                socket.emit('alreadyInGame', message);
                 return;
             }
-            let gameObject = new Game(socket.username);
+            let gameObject = new Game(socket.id);
             while (this.gameCollection.gameNameExists(gameObject.id))
                 gameObject.regenId();
             this.gameCollection.add(gameObject);
-            socket.join(gameObject.id.toString());
-            console.log("Game Created by " + socket.username + " w/ " + gameObject.id);
+            socket.join(gameObject.pin);
+            console.log("Game Created by " + socket.id + " w/ " + gameObject.pin);
             socket.emit('gameCreated', gameObject);
         });
     }
@@ -91,10 +90,11 @@ export class AudienceServer {
                 this.io.emit('message', message);
             });
 
-            socket.on('registerAsAudience', (user: User) => {
-                console.log('[server](New Audience registered): %s', user.name);
-                socket.username = user.name;
-                let message = new Message(new User(AudienceServer.SERVER_NAME), 'successfully registered as audience');
+            socket.on('registerPlayers', (players: Players) => {
+                console.log('[server](New Players registered): %s', socket.id);
+                this.playersInGame.add(socket.id, players);
+                let message = new Message(new User(AudienceServer.SERVER_NAME),
+                    'successfully registered as players');
                 socket.emit('message', message);
             });
 
