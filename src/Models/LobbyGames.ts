@@ -1,3 +1,3 @@
 export class LobbyGames {
-    constructor(public games: Array<string>) {}
+    constructor(public games: Array<number>) {}
 }

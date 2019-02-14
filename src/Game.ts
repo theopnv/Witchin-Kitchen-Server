@@ -1,14 +1,16 @@
 export class Game {
-    id: string;
+    id: number;
     host: string;
-    gameName: string;
     private players: Array<string>;
 
-    constructor(hostName: string, gameName: string) {
-        this.id = (Math.random()+1).toString(36).slice(2, 18);
+    constructor(hostName: string) {
+        this.regenId();
         this.host = hostName;
-        this.gameName = gameName;
         this.players = new Array<string>();
+    }
+
+    regenId() {
+        this.id = Math.floor(Math.random() * 9999) + 1;
     }
 
     addPlayer(player: string) {
