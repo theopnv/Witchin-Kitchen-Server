@@ -1,4 +1,4 @@
-import { Players } from './Players';
+import { Players } from '../Models';
 
 export class PlayerCollection {
     private playersMap: Map<string, Players>;
