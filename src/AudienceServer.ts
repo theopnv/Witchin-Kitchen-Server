@@ -6,10 +6,10 @@ import { User } from './Models/User';
 import { GameCollection } from './GameCollection';
 import { Game } from './Game';
 import { ExtendedSocket } from './ExtendedSocket';
-import { GameCreationInfo } from './Models/GameCreationInfo';
 import { LobbyGames } from './Models/LobbyGames';
 import { Players } from './Models/Players';
 import { PlayerCollection } from './Models/PlayerCollection';
+import { Socket } from 'socket.io';
 
 //import { Message } from './model';
 
@@ -58,6 +58,20 @@ export class AudienceServer {
 
     public getApp(): express.Application {
         return this.app;
+    }
+
+    private gameQuit(socket: Socket) {
+        let game = this.gameCollection.getGameOfHost(socket.id);
+        if (!game) {
+            let message = new Message(new User(AudienceServer.SERVER_NAME), 'game does not exist');
+            socket.emit('gameQuitError', message);
+            return;
+        }
+        this.gameCollection.remove(game);
+        this.playersInGame.remove(socket.id);
+        let answer = new Message(new User(AudienceServer.SERVER_NAME), 'game has been stopped');
+        socket.to(game.pin).emit('gameClosed', answer);
+        console.log('Game ' + game.pin + 'quit message sent' + socket.id);
     }
 
     private makeGame(socket: ExtendedSocket) {
@@ -116,9 +130,14 @@ export class AudienceServer {
                 socket.emit('gameJoined', answer);
             });
 
+            socket.on('quitGame', () => {
+                console.log('Game quit by ' + socket.id);
+                this.gameQuit(socket);
+            });
+
             this.makeGame(socket);
             socket.on('disconnect', () => {
-                console.log('Client disconnected');
+                this.gameQuit(socket);
             });
         });
     }

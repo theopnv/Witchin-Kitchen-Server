@@ -21,8 +21,14 @@ export class GameCollection {
         this.gameNotStarted.add(game.id);
     }
 
+    remove(game: Game) {
+        this.gameDict.delete(game.host);
+        this.gameNames.delete(game.id);
+        this.gameNotStarted.delete(game.id);
+    }
+
     gameStarted(id: number) {
-        this.gameNotStarted.delete(id);
+        return this.gameNotStarted.delete(id);
     }
 
     getGameOfHost(host: string) : Game {

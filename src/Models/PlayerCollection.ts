@@ -11,7 +11,7 @@ export class PlayerCollection {
         this.playersMap.set(socketId, players);
     }
 
-    remove(socketId: string, players: Players) {
+    remove(socketId: string) {
         this.playersMap.delete(socketId);
     }
 }

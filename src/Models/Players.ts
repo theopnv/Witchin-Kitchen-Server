@@ -1,3 +1,6 @@
 export class Players {
-    constructor(public color: string = "", public name: string = "") {}
+    color1: string = "";
+    name1: string = "";
+    color2: string = "";
+    name2: string = "";
 }
