@@ -3,11 +3,13 @@ export class Game {
     pin: string;
     host: string;
     private players: Array<string>;
+    private viewers: Array<string>; //socketIds
 
     constructor(hostName: string) {
         this.regenId();
         this.host = hostName;
         this.players = new Array<string>();
+        this.viewers = new Array<string>();
     }
 
     regenId() {

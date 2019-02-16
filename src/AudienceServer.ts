@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, User, Players, Game } from './Models/';
+import { Message, Players, Game } from './Models/';
 import { GameCollection, PlayerCollection, EventCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
@@ -59,7 +59,6 @@ export class AudienceServer {
         let game = this.gameCollection.getGameOfHost(socket.id);
         if (!game) {
             let message = new Message(
-                new User(AudienceServer.SERVER_NAME),
                 Codes.QUIT_GAME_ERROR, 
                 'Error while exiting the game: The game does not exist');
             socket.emit('message', message);
@@ -68,7 +67,6 @@ export class AudienceServer {
         this.gameCollection.remove(game);
         this.playersInGame.remove(socket.id);
         let answer = new Message(
-            new User(AudienceServer.SERVER_NAME), 
             Codes.QUIT_GAME_SUCCESS, 
             'Game successfully exited');
         socket.to(game.pin).emit('message', answer);
@@ -81,7 +79,6 @@ export class AudienceServer {
             if (gameOfHost) {
                 console.log("User " + socket.id + " tried to make a game but has already one !");
                 let message = new Message(
-                    new User(AudienceServer.SERVER_NAME), 
                     Codes.MAKE_GAME_ERROR, 
                     "Error, the player already created a room.");
                 socket.emit('message', message);
@@ -120,7 +117,6 @@ export class AudienceServer {
                 console.log('[server](New Players registered): %s', socket.id);
                 this.playersInGame.add(socket.id, players);
                 let message = new Message(
-                    new User(AudienceServer.SERVER_NAME),
                     Codes.REGISTER_PLAYERS_SUCCESS,
                     'Players registered successfully');
                 socket.emit('message', message);
@@ -130,7 +126,6 @@ export class AudienceServer {
                 let game = this.gameCollection.getGameById(id);
                 if (!game) {
                     let message = new Message(
-                        new User(AudienceServer.SERVER_NAME), 
                         Codes.JOIN_GAME_ERROR, 
                         'Error, could not join the room. The room' + id + 'does not exist.');
                     socket.emit('message', message);
@@ -139,7 +134,6 @@ export class AudienceServer {
                 socket.join(game.id.toString());
                 console.log(socket.username + " joined " + game.id);
                 let answer = new Message(
-                    new User(AudienceServer.SERVER_NAME), 
                     Codes.JOIN_GAME_SUCCESS, 
                     'Room successfully joined');
                 socket.emit('message', answer);
