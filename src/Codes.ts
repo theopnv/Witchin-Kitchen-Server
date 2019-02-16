@@ -10,5 +10,6 @@ export class Codes {
   static JOIN_GAME_SUCCESS: number = 240;
   static JOIN_GAME_ERROR: number = 241;
 
-  static REFRESH_LOBBY_ERROR: number = 251;
+  static AUDIENCE_QUIT_GAME_SUCCESS: number = 250;
+  static AUDIENCE_QUIT_GAME_ERROR: number = 250;
 }

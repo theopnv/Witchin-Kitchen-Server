@@ -67,10 +67,27 @@ export class AudienceServer {
         this.gameCollection.remove(game);
         this.playersInGame.remove(socket.id);
         let answer = new Message(
-            Codes.QUIT_GAME_SUCCESS, 
+            Codes.QUIT_GAME_SUCCESS,
             'Game successfully exited');
         socket.to(game.pin).emit('message', answer);
-        console.log('Game ' + game.pin + 'quit message sent' + socket.id);
+        console.log('Game ' + game.pin + ' quit message sent ' + socket.id);
+    }
+
+    private audienceQuit(socket: ExtendedSocket) {
+        let game = this.gameCollection.getGameById(socket.gameId);
+        if (!game) {
+            let message = new Message(
+                Codes.AUDIENCE_QUIT_GAME_ERROR,
+                'Error while exiting the game: The game does not exist');
+            socket.emit('message', message);
+            return;
+        }
+        game.removeViewer(socket.id);
+        let answer = new Message(
+            Codes.AUDIENCE_QUIT_GAME_SUCCESS,
+            'Game successfully exited');
+        socket.to(game.pin).emit('message', answer);
+        console.log('Game ' + game.pin + ': viewer ' + socket.id + ' quit game');
     }
 
     private makeGame(socket: ExtendedSocket) {
@@ -94,7 +111,6 @@ export class AudienceServer {
         });
     }
 
-
     public pollind(socket: ExtendedSocket) {
         socket.on('createPoll', () => {
 
@@ -109,7 +125,7 @@ export class AudienceServer {
             // socket.on('registerAsHost', (user: User) => {
             //     console.log('[server](New Host registered): %s', user.name);
             //     socket.username = user.name;
-            //     let message = new Message(new User(AudienceServer.SERVER_NAME), 200, 'successfully registered as host');
+            //     let message = new Message(new User(AudienceServer.SERVER_NAME), 200, 'successfully registered as mainGameSocketID');
             //     this.io.emit('message', message);
             // });
 
@@ -132,6 +148,7 @@ export class AudienceServer {
                     return;
                 }
                 socket.join(game.id.toString());
+                socket.gameId = game.id;
                 console.log(socket.username + " joined " + game.id);
                 let answer = new Message(
                     Codes.JOIN_GAME_SUCCESS, 
@@ -146,7 +163,10 @@ export class AudienceServer {
 
             this.makeGame(socket);
             socket.on('disconnect', () => {
-                this.gameQuit(socket);
+                if (socket.gameId)
+                    this.audienceQuit(socket);
+                else
+                    this.gameQuit(socket);
             });
         });
     }

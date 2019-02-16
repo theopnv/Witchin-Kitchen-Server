@@ -1,13 +1,13 @@
 export class Game {
     id: number;
     pin: string;
-    host: string;
+    mainGameSocketID: string;
     private players: Array<string>;
     private viewers: Array<string>; //socketIds
 
-    constructor(hostName: string) {
+    constructor(socketId: string) {
         this.regenId();
-        this.host = hostName;
+        this.mainGameSocketID = socketId;
         this.players = new Array<string>();
         this.viewers = new Array<string>();
     }
@@ -27,5 +27,13 @@ export class Game {
 
     addPlayer(player: string) {
         this.players.push(player);
+    }
+
+    addViewer(viewerId: string) {
+        this.viewers.push(viewerId);
+    }
+
+    removeViewer(viewerId: string) {
+        this.viewers = this.viewers.filter(v => v == viewerId);
     }
 }

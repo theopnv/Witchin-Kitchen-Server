@@ -16,13 +16,13 @@ export class GameCollection {
     }
 
     add(game: Game) {
-        this.gameDict.set(game.host, game);
-        this.gameNames.set(game.id, game.host);
+        this.gameDict.set(game.mainGameSocketID, game);
+        this.gameNames.set(game.id, game.mainGameSocketID);
         this.gameNotStarted.add(game.id);
     }
 
     remove(game: Game) {
-        this.gameDict.delete(game.host);
+        this.gameDict.delete(game.mainGameSocketID);
         this.gameNames.delete(game.id);
         this.gameNotStarted.delete(game.id);
     }
