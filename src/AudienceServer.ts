@@ -57,14 +57,20 @@ export class AudienceServer {
     private gameQuit(socket: ExtendedSocket) {
         let game = this.gameCollection.getGameOfHost(socket.id);
         if (!game) {
-            let message = new Message(new User(AudienceServer.SERVER_NAME), 'game does not exist');
-            socket.emit('gameQuitError', message);
+            let message = new Message(
+                new User(AudienceServer.SERVER_NAME),
+                Codes.QUIT_GAME_ERROR, 
+                'Error while exiting the game: The game does not exist');
+            socket.emit('message', message);
             return;
         }
         this.gameCollection.remove(game);
         this.playersInGame.remove(socket.id);
-        let answer = new Message(new User(AudienceServer.SERVER_NAME), 'game has been stopped');
-        socket.to(game.pin).emit('gameClosed', answer);
+        let answer = new Message(
+            new User(AudienceServer.SERVER_NAME), 
+            Codes.QUIT_GAME_SUCCESS, 
+            'Game successfully exited');
+        socket.to(game.pin).emit('message', answer);
         console.log('Game ' + game.pin + 'quit message sent' + socket.id);
     }
 
@@ -73,8 +79,11 @@ export class AudienceServer {
             let gameOfHost = this.gameCollection.getGameOfHost(socket.id);
             if (gameOfHost) {
                 console.log("User " + socket.id + " tried to make a game but has already one !");
-                let message = new Message(new User(AudienceServer.SERVER_NAME), "You already created a game.");
-                socket.emit('alreadyInGame', message);
+                let message = new Message(
+                    new User(AudienceServer.SERVER_NAME), 
+                    Codes.MAKE_GAME_ERROR, 
+                    "Error, the player already created a room.");
+                socket.emit('message', message);
                 return;
             }
             let gameObject = new Game(socket.id);
@@ -98,37 +107,46 @@ export class AudienceServer {
     public startLobby() {
         this.io.on('connect', (socket: ExtendedSocket) => {
             console.log('Connected client on port %s.', this.port);
-            socket.on('registerAsHost', (user: User) => {
-                console.log('[server](New Host registered): %s', user.name);
-                socket.username = user.name;
-                let message = new Message(new User(AudienceServer.SERVER_NAME), 'successfully registered as host');
-                this.io.emit('message', message);
-            });
+            
+            // socket.on('registerAsHost', (user: User) => {
+            //     console.log('[server](New Host registered): %s', user.name);
+            //     socket.username = user.name;
+            //     let message = new Message(new User(AudienceServer.SERVER_NAME), 200, 'successfully registered as host');
+            //     this.io.emit('message', message);
+            // });
 
             socket.on('registerPlayers', (players: Players) => {
                 console.log('[server](New Players registered): %s', socket.id);
                 this.playersInGame.add(socket.id, players);
-                let message = new Message(new User(AudienceServer.SERVER_NAME),
-                    'successfully registered as players');
+                let message = new Message(
+                    new User(AudienceServer.SERVER_NAME),
+                    Codes.REGISTER_PLAYERS_SUCCESS,
+                    'Players registered successfully');
                 socket.emit('message', message);
             });
 
             socket.on('refreshLobby', () => {
                 let gameNameArray = this.gameCollection.getGameListNames();
-                socket.emit('lobby', new LobbyGames(gameNameArray))
+                socket.emit('roomList', new LobbyGames(gameNameArray))
             });
 
             socket.on('joinGame', (id: number) => {
                 let game = this.gameCollection.getGameById(id);
                 if (!game) {
-                    let message = new Message(new User(AudienceServer.SERVER_NAME), 'game does not exist');
-                    socket.emit('gameJoinError', message);
+                    let message = new Message(
+                        new User(AudienceServer.SERVER_NAME), 
+                        Codes.JOIN_GAME_ERROR, 
+                        'Error, could not join the room. The room' + id + 'does not exist.');
+                    socket.emit('message', message);
                     return;
                 }
                 socket.join(game.id.toString());
                 console.log(socket.username + " joined " + game.id);
-                let answer = new Message(new User(AudienceServer.SERVER_NAME), 'game joined successfully');
-                socket.emit('gameJoined', answer);
+                let answer = new Message(
+                    new User(AudienceServer.SERVER_NAME), 
+                    Codes.JOIN_GAME_SUCCESS, 
+                    'Room successfully joined');
+                socket.emit('message', answer);
             });
 
             socket.on('quitGame', () => {
