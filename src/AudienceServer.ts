@@ -1,16 +1,10 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message } from './Models/Message';
-import { User } from './Models/User';
-import { GameCollection } from './GameCollection';
-import { Game } from './Game';
+import { Message, User, Players, LobbyGames, Game } from './Models/';
+import { GameCollection, PlayerCollection, EventCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
-import { LobbyGames } from './Models/LobbyGames';
-import { Players } from './Models/Players';
-import { PlayerCollection } from './Models/PlayerCollection';
-import { Socket } from 'socket.io';
-import { Codes } from './Codes';
+
 //import { Message } from './model';
 
 export class AudienceServer {
@@ -19,10 +13,10 @@ export class AudienceServer {
     private app: express.Application;
     private server: Server;
     private io: socketIo.Server;
-    private lobby: socketIo.Namespace;
     private port: string | number;
     private gameCollection: GameCollection;
     private playersInGame: PlayerCollection;
+    private currentEvents: EventCollection;
 
     constructor() {
         this.createApp();
@@ -60,7 +54,7 @@ export class AudienceServer {
         return this.app;
     }
 
-    private gameQuit(socket: Socket) {
+    private gameQuit(socket: ExtendedSocket) {
         let game = this.gameCollection.getGameOfHost(socket.id);
         if (!game) {
             let message = new Message(
@@ -100,6 +94,13 @@ export class AudienceServer {
             console.log("Game Created by " + socket.id + " w/ " + gameObject.pin);
             socket.emit('gameCreated', gameObject);
         });
+    }
+
+
+    public pollind(socket: ExtendedSocket) {
+        socket.on('createPoll', () => {
+
+        })
     }
 
 

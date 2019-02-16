@@ -1,4 +1,4 @@
-import { Game } from './Game';
+import { Game } from '../Models/Game';
 
 export class GameCollection {
     private readonly gameDict: Map<string, Game>;
