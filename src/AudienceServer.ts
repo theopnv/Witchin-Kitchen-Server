@@ -1,9 +1,10 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, User, Players, LobbyGames, Game } from './Models/';
+import { Message, User, Players, Game } from './Models/';
 import { GameCollection, PlayerCollection, EventCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
+import { Codes } from './Codes';
 
 //import { Message } from './model';
 
@@ -123,11 +124,6 @@ export class AudienceServer {
                     Codes.REGISTER_PLAYERS_SUCCESS,
                     'Players registered successfully');
                 socket.emit('message', message);
-            });
-
-            socket.on('refreshLobby', () => {
-                let gameNameArray = this.gameCollection.getGameListNames();
-                socket.emit('roomList', new LobbyGames(gameNameArray))
             });
 
             socket.on('joinGame', (id: number) => {
