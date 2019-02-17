@@ -1,8 +1,8 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, Players, Game } from './Models/';
-import { GameCollection, PlayerCollection, EventCollection } from './Collections';
+import { Message, Players, Game, PollChoices } from './Models/';
+import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
 
@@ -17,7 +17,7 @@ export class AudienceServer {
     private port: string | number;
     private gameCollection: GameCollection;
     private playersInGame: PlayerCollection;
-    private currentEvents: EventCollection;
+    private currentPolls: PollCollection;
 
     constructor() {
         this.createApp();
@@ -111,9 +111,48 @@ export class AudienceServer {
         });
     }
 
-    public pollind(socket: ExtendedSocket) {
-        socket.on('createPoll', () => {
-
+    public polling(socket: ExtendedSocket) {
+        socket.on('launchPoll', (choices: PollChoices) => {
+            let game = this.gameCollection.getGameOfHost(socket.id);
+            if (!game) {
+                console.log("User " + socket.id + " tried to launch a poll but game is not found !");
+                let message = new Message(
+                    Codes.LAUNCH_POLL_ERROR,
+                    "Error, could not broadcast poll");
+                socket.emit('message', message);
+                return;
+            }
+            this.currentPolls.addEvent(game.id, choices);
+            socket.to(game.pin).emit('eventList', choices);
+            let message = new Message(
+                Codes.LAUNCH_POLL_SUCCESS,
+                "Poll successfully broadcasted");
+            socket.emit('message', message);
+        });
+        socket.on('vote', (eventId: number) => {
+            let errorMsg = new Message(
+                Codes.VOTE_ERROR,
+                "Error, vote did not go through. Deadline passed ?");
+            if (!socket.gameId) {
+                console.log("Audience " + socket.id + " game id not valid, can't vote");
+                socket.emit('message', errorMsg);
+                return;
+            }
+            let game = this.gameCollection.getGameById(socket.gameId);
+            if (!game) {
+                console.log("Audience " + socket.id + " game not found with gameId " + socket.gameId);
+                socket.emit('message', errorMsg);
+            }
+            let poll = this.currentPolls.getPollByGameId(game.id);
+            if (!poll) {
+                console.log("Audience " + socket.id + " poll not found with gameId " + game.id);
+                socket.emit('message', errorMsg);
+            }
+            poll.vote(eventId);
+            let message = new Message(
+                Codes.VOTE_SUCCESS,
+                "Vote successfully taken into account.");
+            socket.emit('message', message);
         })
     }
 
@@ -162,6 +201,7 @@ export class AudienceServer {
             });
 
             this.makeGame(socket);
+            this.polling(socket);
             socket.on('disconnect', () => {
                 if (socket.gameId)
                     this.audienceQuit(socket);

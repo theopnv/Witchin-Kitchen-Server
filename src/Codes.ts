@@ -12,4 +12,10 @@ export class Codes {
 
   static AUDIENCE_QUIT_GAME_SUCCESS: number = 250;
   static AUDIENCE_QUIT_GAME_ERROR: number = 250;
+
+  static LAUNCH_POLL_SUCCESS: number = 260;
+  static LAUNCH_POLL_ERROR: number = 261;
+
+  static VOTE_SUCCESS: number = 270;
+  static VOTE_ERROR: number = 271;
 }

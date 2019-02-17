@@ -1,15 +1,17 @@
+import { Player } from './Player';
+
 export class Game {
     id: number;
     pin: string;
     mainGameSocketID: string;
-    private players: Array<string>;
+    private players: Array<Player>;
     private viewers: Array<string>; //socketIds
 
     constructor(socketId: string) {
         this.regenId();
         this.mainGameSocketID = socketId;
-        this.players = new Array<string>();
-        this.viewers = new Array<string>();
+        this.players = [];
+        this.viewers = [];
     }
 
     regenId() {
@@ -25,7 +27,7 @@ export class Game {
         return num;
     }
 
-    addPlayer(player: string) {
+    addPlayer(player: Player) {
         this.players.push(player);
     }
 

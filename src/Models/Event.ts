@@ -1,5 +1,9 @@
 export class Event {
-    startTime: Date;
-    timeOut: Date;
-    choices: ["yes", "no"]
+    id: number;
+    votes: number;
+
+    constructor() {
+        this.id = 0;
+        this.votes = 0;
+    }
 }
