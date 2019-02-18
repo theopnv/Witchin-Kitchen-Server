@@ -84,7 +84,7 @@ export class AudienceServer {
             return;
         }
         game.removeViewer(socket.id);
-        socket.to(game.pin).emit('audienceQuit', game);
+        socket.to(game.pin).emit('gameUpdate', game);
         console.log('Game ' + game.pin + ': viewer ' + socket.id + ' quit game');
     }
 
@@ -169,6 +169,16 @@ export class AudienceServer {
             socket.on('registerPlayers', (players: Players) => {
                 console.log('[server](New Players registered): %s', socket.id);
                 this.playersInGame.add(socket.id, players);
+                let game = this.gameCollection.getGameOfHost(socket.id);
+                if (!game) {
+                    let message = new Message(
+                        Codes.REGISTER_PLAYERS_ERROR,
+                        'Host does not have a game yet');
+                    socket.emit('message', message);
+                    return;
+                }
+                for (let player of players.players)
+                    game.addPlayer(player);
                 let message = new Message(
                     Codes.REGISTER_PLAYERS_SUCCESS,
                     'Players registered successfully');
@@ -186,10 +196,12 @@ export class AudienceServer {
                 }
                 socket.join(game.id.toString());
                 socket.gameId = game.id;
+                game.addViewer(socket.id);
                 console.log(socket.username + " joined " + game.id);
                 let answer = new Message(
                     Codes.JOIN_GAME_SUCCESS, 
                     'Room successfully joined');
+                socket.to(game.pin).emit('gameUpdate', game);
                 socket.emit('message', answer);
             });
 
