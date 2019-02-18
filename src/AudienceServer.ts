@@ -27,6 +27,7 @@ export class AudienceServer {
         this.listen();
         this.gameCollection = new GameCollection();
         this.playersInGame = new PlayerCollection();
+        this.currentPolls = new PollCollection();
     }
 
     private createApp(): void {
