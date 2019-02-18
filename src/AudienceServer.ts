@@ -69,7 +69,8 @@ export class AudienceServer {
         let answer = new Message(
             Codes.QUIT_GAME_SUCCESS,
             'Game successfully exited');
-        socket.to(game.pin).emit('message', answer);
+        socket.emit('message', answer);
+        socket.to(game.pin).emit('gameQuit', "game is closed");
         console.log('Game ' + game.pin + ' quit message sent ' + socket.id);
     }
 
@@ -83,10 +84,7 @@ export class AudienceServer {
             return;
         }
         game.removeViewer(socket.id);
-        let answer = new Message(
-            Codes.AUDIENCE_QUIT_GAME_SUCCESS,
-            'Game successfully exited');
-        socket.to(game.pin).emit('message', answer);
+        socket.to(game.pin).emit('audienceQuit', game);
         console.log('Game ' + game.pin + ': viewer ' + socket.id + ' quit game');
     }
 
