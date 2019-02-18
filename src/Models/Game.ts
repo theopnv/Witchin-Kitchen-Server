@@ -33,9 +33,14 @@ export class Game {
 
     addViewer(viewerId: string) {
         this.viewers.push(viewerId);
+        console.log(this.viewers);
     }
 
     removeViewer(viewerId: string) {
-        this.viewers = this.viewers.filter(v => v == viewerId);
+        const index = this.viewers.indexOf(viewerId, 0);
+        if (index > -1) {
+            this.viewers.splice(index, 1);
+        }
+        // this.viewers = this.viewers.filter(v => v == viewerId);
     }
 }

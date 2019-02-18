@@ -70,7 +70,7 @@ export class AudienceServer {
             Codes.QUIT_GAME_SUCCESS,
             'Game successfully exited');
         socket.emit('message', answer);
-        socket.to(game.pin).emit('gameQuit', "game is closed");
+        socket.to(game.pin).emit('gameQuit');
         console.log('Game ' + game.pin + ' quit message sent ' + socket.id);
     }
 
@@ -159,13 +159,6 @@ export class AudienceServer {
         this.io.on('connect', (socket: ExtendedSocket) => {
             console.log('Connected client on port %s.', this.port);
             
-            // socket.on('registerAsHost', (user: User) => {
-            //     console.log('[server](New Host registered): %s', user.name);
-            //     socket.username = user.name;
-            //     let message = new Message(new User(AudienceServer.SERVER_NAME), 200, 'successfully registered as mainGameSocketID');
-            //     this.io.emit('message', message);
-            // });
-
             socket.on('registerPlayers', (players: Players) => {
                 console.log('[server](New Players registered): %s', socket.id);
                 this.playersInGame.add(socket.id, players);
@@ -197,7 +190,7 @@ export class AudienceServer {
                 socket.join(game.id.toString());
                 socket.gameId = game.id;
                 game.addViewer(socket.id);
-                console.log(socket.username + " joined " + game.id);
+                console.log(socket.id + " joined " + game.id);
                 let answer = new Message(
                     Codes.JOIN_GAME_SUCCESS, 
                     'Room successfully joined');
