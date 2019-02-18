@@ -112,12 +112,18 @@ export class AudienceServer {
     public polling(socket: ExtendedSocket) {
         socket.on('launchPoll', (choices: PollChoices) => {
             let game = this.gameCollection.getGameOfHost(socket.id);
+            let errorMsg = new Message(
+                Codes.LAUNCH_POLL_ERROR,
+                "Error, could not broadcast poll");
             if (!game) {
                 console.log("User " + socket.id + " tried to launch a poll but game is not found !");
-                let message = new Message(
-                    Codes.LAUNCH_POLL_ERROR,
-                    "Error, could not broadcast poll");
-                socket.emit('message', message);
+                socket.emit('message', errorMsg);
+                return;
+            }
+            if (!choices.deadline) {
+                console.log("Player " + socket.id + " did not set deadline in " + game.id);
+                errorMsg.content = "Error, deadline not set.";
+                socket.emit('message', errorMsg);
                 return;
             }
             this.currentPolls.addEvent(game.id, choices);
@@ -130,7 +136,7 @@ export class AudienceServer {
         socket.on('vote', (eventId: number) => {
             let errorMsg = new Message(
                 Codes.VOTE_ERROR,
-                "Error, vote did not go through. Deadline passed ?");
+                "Error, game info not valid.");
             if (!socket.gameId) {
                 console.log("Audience " + socket.id + " game id not valid, can't vote");
                 socket.emit('message', errorMsg);
@@ -140,11 +146,22 @@ export class AudienceServer {
             if (!game) {
                 console.log("Audience " + socket.id + " game not found with gameId " + socket.gameId);
                 socket.emit('message', errorMsg);
+                return;
             }
             let poll = this.currentPolls.getPollByGameId(game.id);
             if (!poll) {
                 console.log("Audience " + socket.id + " poll not found with gameId " + game.id);
+                socket.emit('message', errorMsg)
+                return;
+            }
+            let nowDate = new Date();
+            let deadline = new Date(poll.deadline);
+            if (nowDate >= deadline) {
+                console.log("Audience " + socket.id + " vote passed deadline in " + game.id);
+                errorMsg.content = "Error, vote did not go through. Deadline passed ?";
+                errorMsg.code = Codes.VOTE_DEADLINE_PASSED;
                 socket.emit('message', errorMsg);
+                return;
             }
             poll.vote(eventId);
             let message = new Message(
