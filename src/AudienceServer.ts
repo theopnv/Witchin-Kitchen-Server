@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, Players, Game, PollChoices } from './Models/';
+import { Message, Players, Game, PollChoices, GameOutcome, Player } from './Models/';
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
@@ -56,7 +56,7 @@ export class AudienceServer {
         return this.app;
     }
 
-    private gameQuit(socket: ExtendedSocket) {
+    private gameQuit(socket: ExtendedSocket, gameOutcome: GameOutcome) {
         let game = this.gameCollection.getGameOfHost(socket.id);
         if (!game) {
             let message = new Message(
@@ -71,7 +71,7 @@ export class AudienceServer {
             Codes.QUIT_GAME_SUCCESS,
             'Game successfully exited');
         socket.emit('message', answer);
-        socket.to(game.pin).emit('gameQuit');
+        socket.to(game.pin).emit('gameQuit', gameOutcome);
         console.log('Game ' + game.pin + ' quit message sent ' + socket.id);
     }
 
@@ -216,9 +216,9 @@ export class AudienceServer {
                 socket.emit('message', answer);
             });
 
-            socket.on('quitGame', () => {
+            socket.on('quitGame', (gameOutcome: GameOutcome) => {
                 console.log('Game quit by ' + socket.id);
-                this.gameQuit(socket);
+                this.gameQuit(socket, gameOutcome);
             });
 
             this.makeGame(socket);
@@ -226,8 +226,10 @@ export class AudienceServer {
             socket.on('disconnect', () => {
                 if (socket.gameId)
                     this.audienceQuit(socket);
-                else
-                    this.gameQuit(socket);
+                else {
+                    let gameOutcome = new GameOutcome(false, null);
+                    this.gameQuit(socket, gameOutcome);
+                }
             });
         });
     }
