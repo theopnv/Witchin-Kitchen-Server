@@ -127,7 +127,8 @@ export class AudienceServer {
                 socket.emit('message', errorMsg);
                 return;
             }
-            this.currentPolls.addEvent(game.id, choices);
+            let poll = new PollChoices(choices.deadline, choices.events);
+            this.currentPolls.addEvent(game.id, poll);
             socket.to(game.pin).emit('eventList', choices);
             let message = new Message(
                 Codes.LAUNCH_POLL_SUCCESS,
@@ -152,7 +153,7 @@ export class AudienceServer {
             let poll = this.currentPolls.getPollByGameId(game.id);
             if (!poll) {
                 console.log("Audience " + socket.id + " poll not found with gameId " + game.id);
-                socket.emit('message', errorMsg)
+                socket.emit('message', errorMsg);
                 return;
             }
             let nowDate = new Date();
@@ -176,7 +177,6 @@ export class AudienceServer {
     public startLobby() {
         this.io.on('connect', (socket: ExtendedSocket) => {
             console.log('Connected client on port %s.', this.port);
-            
             socket.on('registerPlayers', (players: Players) => {
                 console.log('[server](New Players registered): %s', socket.id);
                 this.playersInGame.add(socket.id, players);

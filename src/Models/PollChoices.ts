@@ -1,8 +1,13 @@
 import { Event } from './Event';
 
 export class PollChoices {
-    private events: Event[];
+    events: Event[];
     deadline: string;
+
+    constructor(date: string = "", eventArr: Event[] = Array<Event>()) {
+        this.events = eventArr;
+        this.deadline = date;
+    }
 
     vote(eventId: number) {
         let idx = this.events.findIndex(event => event.id == eventId);

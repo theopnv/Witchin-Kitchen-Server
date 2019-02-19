@@ -14,7 +14,7 @@ export class PollCollection {
         return this.polls.delete(gameId);
     }
 
-    getPollByGameId(gameId: number) {
+    getPollByGameId(gameId: number) : PollChoices {
         return this.polls.get(gameId);
     }
 }
