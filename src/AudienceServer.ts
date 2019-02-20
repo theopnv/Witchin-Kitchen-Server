@@ -5,6 +5,7 @@ import { Message, Players, Game, PollChoices, GameOutcome, Player } from './Mode
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
+import { Task, TaskCallback, TaskTimer } from 'tasktimer';
 
 //import { Message } from './model';
 
@@ -18,6 +19,7 @@ export class AudienceServer {
     private gameCollection: GameCollection;
     private playersInGame: PlayerCollection;
     private currentPolls: PollCollection;
+    private taskTimer: TaskTimer;
 
     constructor() {
         this.createApp();
@@ -28,6 +30,7 @@ export class AudienceServer {
         this.gameCollection = new GameCollection();
         this.playersInGame = new PlayerCollection();
         this.currentPolls = new PollCollection();
+        this.taskTimer = new TaskTimer(1000);
     }
 
     private createApp(): void {
@@ -134,6 +137,19 @@ export class AudienceServer {
                 Codes.LAUNCH_POLL_SUCCESS,
                 "Poll successfully broadcasted");
             socket.emit('message', message);
+            let taskCallback = function (task: Task) {
+                console.log(task.id + ' task has run ' + task.currentRuns + ' times.');
+                let endPoll = this.currentPolls.getPollByGameId(game.id);
+                socket.emit('event', endPoll);
+            };
+            taskCallback.bind(this);
+            const pollTask = {
+                id: 'poll',
+                tickDelay: 30000,   // 30s
+                totalRuns: 1,   // times to run
+                callback: taskCallback
+            };
+            this.taskTimer.add(pollTask).start();
         });
         socket.on('vote', (eventId: number) => {
             let errorMsg = new Message(
