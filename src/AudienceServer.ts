@@ -5,6 +5,7 @@ import { Message, Players, Game, PollChoices, GameOutcome, Player } from './Mode
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
+import { Task, TaskCallback, TaskTimer } from 'tasktimer';
 
 //import { Message } from './model';
 
@@ -18,6 +19,7 @@ export class AudienceServer {
     private gameCollection: GameCollection;
     private playersInGame: PlayerCollection;
     private currentPolls: PollCollection;
+    private taskTimer: TaskTimer;
 
     constructor() {
         this.createApp();
@@ -28,6 +30,7 @@ export class AudienceServer {
         this.gameCollection = new GameCollection();
         this.playersInGame = new PlayerCollection();
         this.currentPolls = new PollCollection();
+        this.taskTimer = new TaskTimer(1000);
     }
 
     private createApp(): void {
@@ -110,6 +113,16 @@ export class AudienceServer {
         });
     }
 
+    private pollTimeOut(socket: ExtendedSocket, deadline: string, gameId: number) {
+        let that = this;
+        let cb = function () {
+            let endPoll = that.currentPolls.getPollByGameId(gameId);
+            socket.emit('event', endPoll);
+            that.currentPolls.removeEvent(gameId);
+        };
+        setTimeout(cb, new Date(deadline).getTime() - (new Date()).getTime());
+    }
+
     public polling(socket: ExtendedSocket) {
         socket.on('launchPoll', (choices: PollChoices) => {
             let game = this.gameCollection.getGameOfHost(socket.id);
@@ -134,6 +147,7 @@ export class AudienceServer {
                 Codes.LAUNCH_POLL_SUCCESS,
                 "Poll successfully broadcasted");
             socket.emit('message', message);
+            this.pollTimeOut(socket, poll.deadline, game.id);
         });
         socket.on('vote', (eventId: number) => {
             let errorMsg = new Message(
@@ -205,7 +219,7 @@ export class AudienceServer {
                     socket.emit('message', message);
                     return;
                 }
-                socket.join(game.id.toString());
+                socket.join(game.idAsString());
                 socket.gameId = game.id;
                 game.addViewer(socket.id);
                 console.log(socket.id + " joined " + game.id);
