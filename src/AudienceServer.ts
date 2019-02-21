@@ -113,6 +113,16 @@ export class AudienceServer {
         });
     }
 
+    private pollTimeOut(socket: ExtendedSocket, deadline: string, gameId: number) {
+        let that = this;
+        let cb = function () {
+            let endPoll = that.currentPolls.getPollByGameId(gameId);
+            socket.emit('event', endPoll);
+            that.currentPolls.removeEvent(gameId);
+        };
+        setTimeout(cb, new Date(deadline).getTime() - (new Date()).getTime());
+    }
+
     public polling(socket: ExtendedSocket) {
         socket.on('launchPoll', (choices: PollChoices) => {
             let game = this.gameCollection.getGameOfHost(socket.id);
@@ -137,19 +147,7 @@ export class AudienceServer {
                 Codes.LAUNCH_POLL_SUCCESS,
                 "Poll successfully broadcasted");
             socket.emit('message', message);
-            let taskCallback = function (task: Task) {
-                console.log(task.id + ' task has run ' + task.currentRuns + ' times.');
-                let endPoll = this.currentPolls.getPollByGameId(game.id);
-                socket.emit('event', endPoll);
-            };
-            taskCallback.bind(this);
-            const pollTask = {
-                id: 'poll',
-                tickDelay: 30000,   // 30s
-                totalRuns: 1,   // times to run
-                callback: taskCallback
-            };
-            this.taskTimer.add(pollTask).start();
+            this.pollTimeOut(socket, poll.deadline, game.id);
         });
         socket.on('vote', (eventId: number) => {
             let errorMsg = new Message(
@@ -221,7 +219,7 @@ export class AudienceServer {
                     socket.emit('message', message);
                     return;
                 }
-                socket.join(game.id.toString());
+                socket.join(game.idAsString());
                 socket.gameId = game.id;
                 game.addViewer(socket.id);
                 console.log(socket.id + " joined " + game.id);
