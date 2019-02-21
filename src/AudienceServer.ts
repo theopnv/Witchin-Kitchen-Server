@@ -114,6 +114,14 @@ export class AudienceServer {
     }
 
     private pollTimeOut(socket: ExtendedSocket, deadline: string, gameId: number) {
+        let timeout = new Date(deadline).getTime();
+        if (timeout <= new Date().getTime()) {
+            let message = new Message(
+                Codes.LAUNCH_POLL_ERROR,
+                "deadline is already passed."
+            );
+            socket.emit('message', message);
+        }
         let that = this;
         let cb = function () {
             let endPoll = that.currentPolls.getPollByGameId(gameId);
@@ -170,9 +178,8 @@ export class AudienceServer {
                 socket.emit('message', errorMsg);
                 return;
             }
-            let nowDate = new Date();
             let deadline = new Date(poll.deadline);
-            if (nowDate >= deadline) {
+            if (new Date() >= deadline) {
                 console.log("Audience " + socket.id + " vote passed deadline in " + game.id);
                 errorMsg.content = "Error, vote did not go through. Deadline passed ?";
                 errorMsg.code = Codes.VOTE_DEADLINE_PASSED;
