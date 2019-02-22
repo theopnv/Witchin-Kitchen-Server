@@ -1,11 +1,12 @@
 import { Player } from './Player';
+import { Viewer } from './Viewer';
 
 export class Game {
     id: number;
     pin: string;
     mainGameSocketID: string;
     private players: Array<Player>;
-    private viewers: Array<string>; //socketIds
+    private viewers: Array<Viewer>; //socketIds
 
     constructor(socketId: string) {
         this.regenId();
@@ -31,16 +32,23 @@ export class Game {
         this.players.push(player);
     }
 
-    addViewer(viewerId: string) {
-        this.viewers.push(viewerId);
+    addViewer(viewer: Viewer) {
+        this.viewers.push(viewer);
         console.log(this.viewers);
     }
 
     removeViewer(viewerId: string) {
-        const index = this.viewers.indexOf(viewerId, 0);
+        const viewer = this.viewers.find(i => i.socketId === viewerId);
+        const index = this.viewers.indexOf(viewer, 0);
         if (index > -1) {
             this.viewers.splice(index, 1);
         }
-        // this.viewers = this.viewers.filter(v => v == viewerId);
+    }
+
+    editViewer(viewer: Viewer) {
+        const index = this.viewers.indexOf(viewer, 0);
+        if (index > -1) {
+            this.viewers[index] = viewer;
+        }
     }
 }

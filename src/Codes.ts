@@ -19,4 +19,7 @@ export class Codes {
   static VOTE_SUCCESS: number = 270;
   static VOTE_ERROR: number = 271;
   static VOTE_DEADLINE_PASSED: number = 272;
+
+  static REGISTER_VIEWER_SUCCESS = 300;
+  static REGISTER_VIEWER_ERROR = 301;
 }

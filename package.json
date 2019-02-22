@@ -20,8 +20,7 @@
   "homepage": "https://github.com/VictorDebray/con2-server#readme",
   "dependencies": {
     "express": "^4.16.4",
-    "socketio": "^1.0.0",
-    "tasktimer": "^2.0.1"
+    "socketio": "^1.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.16.1",
