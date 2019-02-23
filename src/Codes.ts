@@ -20,6 +20,12 @@ export class Codes {
   static VOTE_ERROR: number = 271;
   static VOTE_DEADLINE_PASSED: number = 272;
 
+  static LAUNCH_SPELL_CAST_SUCCESS: number = 280;
+  //TODO: Error management
+
+  static SPELL_CASTED_SUCCESS: number = 290;
+  //TODO: Error management
+
   static REGISTER_VIEWER_SUCCESS = 300;
   static REGISTER_VIEWER_ERROR = 301;
 }
