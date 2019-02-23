@@ -193,8 +193,9 @@ export class AudienceServer {
 
     public spellCasting(socket: ExtendedSocket) {
         socket.on('launchSpellCast', (viewer: Viewer) => {
+            console.log("launchSpellCast: " + viewer.socketId)
             // TODO: Probably good to check that sockets[viewer.socketId] actually exists
-            this.io.sockets[viewer.socketId].emit('castSpell');
+            this.io.to(`${viewer.socketId}`).emit('castSpell');
             let answer = new Message(
                 Codes.LAUNCH_SPELL_CAST_SUCCESS,
                 'Successfully asked the viewer to cast a spell'
@@ -203,6 +204,7 @@ export class AudienceServer {
         });
 
         socket.on('castSpell', (spell: Spell) => {
+            console.log('cast spell request from a viewer: spellId = ' + spell.spellId)
             let game = this.gameCollection.getGameById(socket.gameId);
             socket.to(game.pin).emit('spell', spell);
             let answer = new Message(
