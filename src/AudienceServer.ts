@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, Players, Game, PollChoices, GameOutcome, Player, Viewer } from './Models/';
+import { Message, Players, Game, PollChoices, GameOutcome, Player, Viewer, Spell } from './Models/';
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
@@ -191,6 +191,27 @@ export class AudienceServer {
         })
     }
 
+    public spellCasting(socket: ExtendedSocket) {
+        socket.on('launchSpellCast', (viewer: Viewer) => {
+            // TODO: Probably good to check that sockets[viewer.socketId] actually exists
+            this.io.sockets[viewer.socketId].emit('castSpell');
+            let answer = new Message(
+                Codes.LAUNCH_SPELL_CAST_SUCCESS,
+                'Successfully asked the viewer to cast a spell'
+            );
+            socket.emit('message', answer);
+        });
+
+        socket.on('castSpell', (spell: Spell) => {
+            let game = this.gameCollection.getGameById(socket.gameId);
+            socket.to(game.pin).emit('spell', spell);
+            let answer = new Message(
+                Codes.SPELL_CASTED_SUCCESS,
+                'Spell successfully casted'
+            );
+            socket.emit('message', answer);
+        });
+    }
 
     public startLobby() {
         this.io.on('connect', (socket: ExtendedSocket) => {
@@ -252,6 +273,7 @@ export class AudienceServer {
 
             this.makeGame(socket);
             this.polling(socket);
+            this.spellCasting(socket);
             socket.on('disconnect', () => {
                 if (socket.gameId)
                     this.audienceQuit(socket);
