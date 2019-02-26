@@ -110,22 +110,14 @@ export class AudienceServer {
         });
     }
 
-    private pollTimeOut(socket: ExtendedSocket, deadline: string, gameId: number) {
-        let timeout = new Date(deadline).getTime();
-        if (timeout <= new Date().getTime()) {
-            let message = new Message(
-                Codes.LAUNCH_POLL_ERROR,
-                "deadline is already passed."
-            );
-            socket.emit('message', message);
-        }
+    private pollTimeOut(socket: ExtendedSocket, duration: number, gameId: number) {
         let that = this;
         let cb = function () {
             let endPoll = that.currentPolls.getPollByGameId(gameId);
             socket.emit('event', endPoll);
             that.currentPolls.removeEvent(gameId);
         };
-        setTimeout(cb, new Date(deadline).getTime() - (new Date()).getTime());
+        setTimeout(cb, duration * 1000);
     }
 
     public polling(socket: ExtendedSocket) {
@@ -139,20 +131,22 @@ export class AudienceServer {
                 socket.emit('message', errorMsg);
                 return;
             }
-            if (!choices.deadline) {
+            if (!choices.duration) {
                 console.log("Player " + socket.id + " did not set deadline in " + game.id);
-                errorMsg.content = "Error, deadline not set.";
+                errorMsg.content = "Error, duration not set.";
                 socket.emit('message', errorMsg);
                 return;
             }
-            let poll = new PollChoices(choices.deadline, choices.events);
+            let deadline = new Date();
+            deadline.setSeconds(deadline.getSeconds() + +choices.duration);
+            let poll = new PollChoices(deadline.toISOString(), choices.duration, choices.events);
             this.currentPolls.addEvent(game.id, poll);
             socket.to(game.pin).emit('eventList', choices);
             let message = new Message(
                 Codes.LAUNCH_POLL_SUCCESS,
                 "Poll successfully broadcasted");
             socket.emit('message', message);
-            this.pollTimeOut(socket, poll.deadline, game.id);
+            this.pollTimeOut(socket, +poll.duration, game.id);
         });
         socket.on('vote', (eventId: number) => {
             let errorMsg = new Message(

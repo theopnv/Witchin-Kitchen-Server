@@ -3,10 +3,12 @@ import { Event } from './Event';
 export class PollChoices {
     events: Event[];
     deadline: string;
+    duration: string;
 
-    constructor(date: string = "", eventArr: Event[] = Array<Event>()) {
+    constructor(date: string = "", duration: string, eventArr: Event[] = Array<Event>()) {
         this.events = eventArr;
         this.deadline = date;
+        this.duration = duration;
     }
 
     vote(eventId: number) {
