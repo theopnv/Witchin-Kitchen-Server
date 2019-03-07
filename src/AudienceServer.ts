@@ -236,7 +236,7 @@ export class AudienceServer {
                 if (!game) {
                     let message = new Message(
                         Codes.JOIN_GAME_ERROR, 
-                        'Error, could not join the room. The room' + id + 'does not exist.');
+                        'Error, could not join the room. The room ' + id + ' does not exist.');
                     socket.emit('message', message);
                     return;
                 }
