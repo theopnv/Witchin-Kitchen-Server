@@ -5,6 +5,7 @@ import { Message, Players, Game, PollChoices, GameOutcome, Player, Viewer, Spell
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
+import { GameForViewer } from './Models/GameForViewer';
 
 //import { Message } from './model';
 
@@ -247,7 +248,7 @@ export class AudienceServer {
                 game.addViewer(viewer);
                 console.log(socket.id + " joined " + game.id);
 
-                let answer = viewer;
+                let answer = new GameForViewer(viewer, game);
                 socket.to(game.pin).emit('gameUpdate', game);
                 socket.emit('joinedGame', answer);
             });
