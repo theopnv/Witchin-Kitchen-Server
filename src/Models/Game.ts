@@ -5,6 +5,7 @@ export class Game {
     id: number;
     pin: string;
     mainGameSocketID: string;
+    madeGame: boolean;
     private players: Array<Player>;
     private viewers: Array<Viewer>; //socketIds
 
@@ -13,6 +14,7 @@ export class Game {
         this.mainGameSocketID = socketId;
         this.players = [];
         this.viewers = [];
+        this.madeGame = false;
     }
 
     regenId() {
