@@ -134,7 +134,7 @@ export class AudienceServer {
         let cb = function () {
             let endPoll: PollChoices = that.currentPolls.getPollByGameId(gameId);
             socket.emit('event', endPoll);
-            socket.to(Game.idAsString(gameId)).emit('pollResult', endPoll);
+            socket.to(Game.idAsString(gameId)).emit('pollResults', endPoll);
             that.currentPolls.removeEvent(gameId);
         };
         setTimeout(cb, duration * 1000);
@@ -202,6 +202,9 @@ export class AudienceServer {
                 Codes.VOTE_SUCCESS,
                 "Vote successfully taken into account.");
             socket.emit('message', message);
+            console.log("pollResults" + poll.events[0].id);
+            console.log("pollResults" + poll.events[0].votes);
+            socket.to(game.pin).emit('pollResults', poll);
         })
     }
 
