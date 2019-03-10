@@ -19,11 +19,11 @@ export class Game {
 
     regenId() {
         this.id = Math.floor(Math.random() * 9999) + 1;
-        this.pin = this.idAsString();
+        this.pin = Game.idAsString(this.id);
     }
 
-    idAsString() {
-        let num = this.id.toString();
+    static idAsString(id: number) {
+        let num = id.toString();
         while (num.length < 4) {
             num = '0' + num;
         }

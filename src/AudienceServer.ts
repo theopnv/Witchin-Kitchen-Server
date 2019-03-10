@@ -113,8 +113,9 @@ export class AudienceServer {
     private pollTimeOut(socket: ExtendedSocket, duration: number, gameId: number) {
         let that = this;
         let cb = function () {
-            let endPoll = that.currentPolls.getPollByGameId(gameId);
+            let endPoll: PollChoices = that.currentPolls.getPollByGameId(gameId);
             socket.emit('event', endPoll);
+            socket.to(Game.idAsString(gameId)).emit('pollResult', endPoll);
             that.currentPolls.removeEvent(gameId);
         };
         setTimeout(cb, duration * 1000);
@@ -242,7 +243,7 @@ export class AudienceServer {
                     socket.emit('message', message);
                     return;
                 }
-                socket.join(game.idAsString());
+                socket.join(Game.idAsString(game.id));
                 socket.gameId = game.id;
                 let viewer = new Viewer();
                 viewer.socketId = socket.id;
