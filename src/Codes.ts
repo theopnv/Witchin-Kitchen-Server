@@ -28,4 +28,7 @@ export class Codes {
 
   static REGISTER_VIEWER_SUCCESS = 300;
   static REGISTER_VIEWER_ERROR = 301;
+
+  static UPDATE_GAME_SUCCESS = 300;
+  static UPDATE_GAME_ERROR = 301;
 }

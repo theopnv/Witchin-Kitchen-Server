@@ -110,6 +110,25 @@ export class AudienceServer {
         });
     }
 
+    private updateGameState(socket: ExtendedSocket) {
+        socket.on('updateGameState', (gameUpdated: Game) => {
+            let game = this.gameCollection.getGameOfHost(socket.id);
+            let message = new Message(
+                Codes.UPDATE_GAME_ERROR,
+                "Error, could not send stats to the viewer");
+            if (!game) {
+                console.log("User " + socket.id + " game is not found !");
+                socket.emit('message', message);
+                return;
+            }
+            this.gameCollection.add(gameUpdated);
+            socket.to(gameUpdated.pin).emit('updateGameState', gameUpdated);
+            message.code = Codes.UPDATE_GAME_SUCCESS;
+            message.content = "Successfully sent an update to the viewer";
+            socket.emit('message', message);
+        })
+    }
+
     private pollTimeOut(socket: ExtendedSocket, duration: number, gameId: number) {
         let that = this;
         let cb = function () {
@@ -276,6 +295,7 @@ export class AudienceServer {
             this.makeGame(socket);
             this.polling(socket);
             this.spellCasting(socket);
+            this.updateGameState(socket);
             socket.on('disconnect', () => {
                 if (socket.gameId)
                     this.audienceQuit(socket);
