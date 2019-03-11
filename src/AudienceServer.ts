@@ -121,9 +121,9 @@ export class AudienceServer {
                 socket.emit('message', message);
                 return;
             }
-            gameUpdated.id = game.id;
-            this.gameCollection.add(gameUpdated);
-            socket.to(gameUpdated.pin).emit('updateGameState', gameUpdated);
+            game.update(gameUpdated);
+            this.gameCollection.add(game);
+            socket.to(game.pin).emit('updateGameState', game);
             message.code = Codes.UPDATE_GAME_SUCCESS;
             message.content = "Successfully sent an update to the viewer";
             socket.emit('message', message);

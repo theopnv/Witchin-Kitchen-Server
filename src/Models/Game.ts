@@ -53,4 +53,11 @@ export class Game {
             this.viewers[index] = viewer;
         }
     }
+
+    update(update: Game) {
+        this.players = update.players;
+        this.viewers = update.viewers;
+        this.madeGame = update.madeGame;
+        this.mainGameSocketID = update.mainGameSocketID;
+    }
 }
