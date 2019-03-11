@@ -36,7 +36,7 @@ export class Game {
 
     addViewer(viewer: Viewer) {
         this.viewers.push(viewer);
-        console.log(this.viewers);
+        console.log("New viewer added to game " + this.pin + ": " + this.viewers);
     }
 
     removeViewer(viewerId: string) {

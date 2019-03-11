@@ -202,9 +202,8 @@ export class AudienceServer {
                 Codes.VOTE_SUCCESS,
                 "Vote successfully taken into account.");
             socket.emit('message', message);
-            console.log("pollResults" + poll.events[0].id);
-            console.log("pollResults" + poll.events[0].votes);
-            socket.to(game.pin).emit('pollResults', poll);
+            console.log(game.pin)
+            this.io.in(game.pin).emit('pollResults', poll);
         })
     }
 
