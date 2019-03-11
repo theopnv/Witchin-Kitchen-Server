@@ -121,6 +121,7 @@ export class AudienceServer {
                 socket.emit('message', message);
                 return;
             }
+            gameUpdated.id = game.id;
             this.gameCollection.add(gameUpdated);
             socket.to(gameUpdated.pin).emit('updateGameState', gameUpdated);
             message.code = Codes.UPDATE_GAME_SUCCESS;
