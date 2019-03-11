@@ -278,6 +278,7 @@ export class AudienceServer {
                 if (game.madeGame) {
                     socket.emit('updateGameState', game);
                 }
+                this.gameCollection.add(game);
             });
 
             socket.on('registerViewer', (viewer: Viewer) => {
