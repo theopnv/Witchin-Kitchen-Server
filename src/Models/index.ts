@@ -7,3 +7,4 @@ export * from './Event';
 export * from './Spell';
 export * from './PollChoices';
 export * from './GameOutcome';
+export * from './EndGame';

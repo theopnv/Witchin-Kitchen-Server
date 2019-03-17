@@ -1,7 +1,7 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, Players, Game, PollChoices, GameOutcome, Player, Viewer, Spell } from './Models/';
+import { Message, Players, Game, PollChoices, GameOutcome, Player, Viewer, Spell, EndGame } from './Models/';
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
@@ -56,7 +56,7 @@ export class AudienceServer {
         return this.app;
     }
 
-    private gameQuit(socket: ExtendedSocket, gameOutcome: GameOutcome) {
+    private gameQuit(socket: ExtendedSocket) {
         let game = this.gameCollection.getGameOfHost(socket.id);
         if (!game) {
             let message = new Message(
@@ -71,8 +71,40 @@ export class AudienceServer {
             Codes.QUIT_GAME_SUCCESS,
             'Game successfully exited');
         socket.emit('message', answer);
-        socket.to(game.pin).emit('gameQuit', gameOutcome);
         console.log('Game ' + game.pin + ' quit message sent ' + socket.id);
+    }
+
+    private endGame(socket: ExtendedSocket) {
+        socket.on('gameOutcome', (gameOutcome: GameOutcome) => {
+            let game = this.gameCollection.getGameOfHost(socket.id);
+            socket.to(game.pin).emit('gameOutcome', gameOutcome);
+            let answer = new Message(
+                Codes.QUIT_GAME_SUCCESS,
+                'Game outcome successfully sent');
+            socket.emit('message', answer);
+        });
+
+        socket.on('endGame', (endGame: EndGame) => {
+            let game = this.gameCollection.getGameOfHost(socket.id);
+            if (!game) {
+                let message = new Message(
+                    Codes.REMATCH_ERROR,
+                    "Error, could not send rematch order to the viewer: Game does not exist");
+                console.log("User " + socket.id + " game is not found !");
+                socket.emit('message', message);
+                return;
+            }
+            socket.to(game.pin).emit('endGame', endGame);
+            let message = new Message(
+                Codes.REMATCH_SUCCESS,
+                "Successfully broadcasted rematch order to viewers"
+            );
+            socket.emit('message', message);
+            
+            if (endGame.doRematch === false) {
+                this.gameQuit(socket);
+            }
+        });
     }
 
     private audienceQuit(socket: ExtendedSocket) {
@@ -291,21 +323,24 @@ export class AudienceServer {
                 socket.emit('message', answer);
             });
 
-            socket.on('quitGame', (gameOutcome: GameOutcome) => {
-                console.log('Game quit by ' + socket.id);
-                this.gameQuit(socket, gameOutcome);
-            });
-
             this.makeGame(socket);
             this.polling(socket);
             this.spellCasting(socket);
             this.updateGameState(socket);
+            this.endGame(socket);
+            
             socket.on('disconnect', () => {
-                if (socket.gameId)
+                if (socket.gameId) {
                     this.audienceQuit(socket);
+                }
                 else {
-                    let gameOutcome = new GameOutcome(false, null);
-                    this.gameQuit(socket, gameOutcome);
+                    let game = this.gameCollection.getGameOfHost(socket.id);
+                    if (game) {
+                        let endGame = new EndGame();
+                        endGame.doRematch = false;
+                        socket.to(game.pin).emit('endGame', endGame);
+                        this.gameQuit(socket);
+                    }
                 }
             });
         });

@@ -31,4 +31,7 @@ export class Codes {
 
   static UPDATE_GAME_SUCCESS = 310;
   static UPDATE_GAME_ERROR = 311;
+
+  static REMATCH_SUCCESS = 320;
+  static REMATCH_ERROR = 321;
 }
