@@ -21,7 +21,7 @@ export class Codes {
   static VOTE_DEADLINE_PASSED: number = 272;
 
   static LAUNCH_SPELL_CAST_SUCCESS: number = 280;
-  //TODO: Error management
+  static LAUNCH_SPELL_CAST_ERROR: number = 281;
 
   static SPELL_CASTED_SUCCESS: number = 290;
   //TODO: Error management

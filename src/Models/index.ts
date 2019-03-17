@@ -5,6 +5,7 @@ export * from './Viewer';
 export * from './Game';
 export * from './Event';
 export * from './Spell';
+export * from './SpellRequest'
 export * from './PollChoices';
 export * from './GameOutcome';
 export * from './EndGame';

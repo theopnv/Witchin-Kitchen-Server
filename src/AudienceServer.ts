@@ -1,7 +1,18 @@
 import { createServer, Server } from 'http';
 import * as express from 'express';
 import * as socketIo from 'socket.io';
-import { Message, Players, Game, PollChoices, GameOutcome, Player, Viewer, Spell, EndGame } from './Models/';
+import {
+    Message,
+    Players,
+    Game,
+    PollChoices,
+    GameOutcome,
+    Player,
+    Viewer,
+    Spell,
+    EndGame,
+    SpellRequest
+} from './Models/';
 import { GameCollection, PlayerCollection, PollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
@@ -243,25 +254,33 @@ export class AudienceServer {
                 Codes.VOTE_SUCCESS,
                 "Vote successfully taken into account.");
             socket.emit('message', message);
-            console.log(game.pin)
+            console.log(game.pin);
             this.io.in(game.pin).emit('pollResults', poll);
         })
     }
 
     public spellCasting(socket: ExtendedSocket) {
-        socket.on('launchSpellCast', (viewer: Viewer) => {
-            console.log("launchSpellCast: " + viewer.socketId)
-            // TODO: Probably good to check that sockets[viewer.socketId] actually exists
-            this.io.to(`${viewer.socketId}`).emit('castSpell');
-            let answer = new Message(
-                Codes.LAUNCH_SPELL_CAST_SUCCESS,
-                'Successfully asked the viewer to cast a spell'
+        socket.on('launchSpellCast', (spellRequest: SpellRequest) => {
+            let message = new Message(
+                Codes.LAUNCH_SPELL_CAST_ERROR,
+                'Request to cast a spell is incomplete'
             );
-            socket.emit('message', answer);
+            if (!spellRequest.targetedViewer
+                || !spellRequest.targetedViewer.socketId
+                || !spellRequest.fromPlayer) {
+                socket.emit('message', message);
+                return;
+            }
+            console.log("launchSpellCast: " + spellRequest.targetedViewer.socketId);
+            // TODO: Probably good to check that sockets[viewer.socketId] actually exists
+            this.io.to(spellRequest.targetedViewer.socketId).emit('castSpellRequest', spellRequest);
+            message.code = Codes.LAUNCH_SPELL_CAST_SUCCESS;
+            message.content = 'Successfully asked the viewer to cast a spell';
+            socket.emit('message', message);
         });
 
         socket.on('castSpell', (spell: Spell) => {
-            console.log('cast spell request from a viewer: spellId = ' + spell.spellId)
+            console.log('cast spell request from a viewer: spellId = ' + spell.spellId);
             let game = this.gameCollection.getGameById(socket.gameId);
             socket.to(game.pin).emit('spell', spell);
             let answer = new Message(
