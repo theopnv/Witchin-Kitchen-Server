@@ -77,6 +77,14 @@ export class AudienceServer {
     private endGame(socket: ExtendedSocket) {
         socket.on('gameOutcome', (gameOutcome: GameOutcome) => {
             let game = this.gameCollection.getGameOfHost(socket.id);
+            if (!game) {
+                let message = new Message(
+                    Codes.QUIT_GAME_ERROR,
+                    "Error, could not send rematch order to the viewer: Game does not exist");
+                console.log("User " + socket.id + " game is not found !");
+                socket.emit('message', message);
+                return;
+            }
             socket.to(game.pin).emit('gameOutcome', gameOutcome);
             let answer = new Message(
                 Codes.QUIT_GAME_SUCCESS,
