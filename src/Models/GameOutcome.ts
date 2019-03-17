@@ -1,21 +1,21 @@
 import { Player } from './Player';
 
 export class GameOutcome {
-    get leaderboard(): Player[] {
-        return this._leaderboard;
+    get leaderboards(): Player[] {
+        return this._leaderboards;
     }
 
-    set leaderboard(value: Player[]) {
-        this._leaderboard = value;
+    set leaderboards(value: Player[]) {
+        this._leaderboards = value;
     }
-    private _leaderboard: Player[];
+    private _leaderboards: Player[];
 
     constructor() {
-        this._leaderboard = new Array<Player>();
+        this._leaderboards = new Array<Player>();
     }
 
 
     addPlayer(player: Player) {
-        this._leaderboard.push(player)
+        this._leaderboards.push(player)
     }
 }
