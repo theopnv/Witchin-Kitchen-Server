@@ -1,4 +1,4 @@
-import { Player } from './Player';
+import { Player } from './';
 
 export class Players {
     players: Array<Player>;

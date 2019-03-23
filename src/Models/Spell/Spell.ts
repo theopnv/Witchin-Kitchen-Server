@@ -1,5 +1,5 @@
-import { Player } from './Player';
-import { Viewer } from './Viewer';
+import { Player } from '../Player/Player';
+import { Viewer } from '../Viewer';
 
 export class Spell {
     spellId: number;

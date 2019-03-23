@@ -1,5 +1,4 @@
-import { Viewer } from './Viewer';
-import { Player } from './Player';
+import { Viewer, Player } from '../';
 
 export class SpellRequest {
     targetedViewer: Viewer;

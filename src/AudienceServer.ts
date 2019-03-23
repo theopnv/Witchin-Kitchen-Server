@@ -11,9 +11,9 @@ import {
     Viewer,
     Spell,
     EndGame,
-    SpellRequest
+    SpellRequest, IngredientPoll
 } from './Models/';
-import { GameCollection, PlayerCollection, PollCollection } from './Collections';
+import { GameCollection, PlayerCollection, PollCollection, IngredientPollCollection } from './Collections';
 import { ExtendedSocket } from './ExtendedSocket';
 import { Codes } from './Codes';
 
@@ -29,6 +29,7 @@ export class AudienceServer {
     private gameCollection: GameCollection;
     private playersInGame: PlayerCollection;
     private currentPolls: PollCollection;
+    private currentIngredientPolls: IngredientPollCollection;
 
     constructor() {
         this.createApp();
@@ -39,6 +40,7 @@ export class AudienceServer {
         this.gameCollection = new GameCollection();
         this.playersInGame = new PlayerCollection();
         this.currentPolls = new PollCollection();
+        this.currentIngredientPolls = new IngredientPollCollection();
     }
 
     private createApp(): void {
@@ -71,7 +73,7 @@ export class AudienceServer {
         let game = this.gameCollection.getGameOfHost(socket.id);
         if (!game) {
             let message = new Message(
-                Codes.QUIT_GAME_ERROR, 
+                Codes.QUIT_GAME_ERROR,
                 'Error while exiting the game: The game does not exist');
             socket.emit('message', message);
             return;
@@ -119,7 +121,7 @@ export class AudienceServer {
                 "Successfully broadcasted rematch order to viewers"
             );
             socket.emit('message', message);
-            
+
             if (endGame.doRematch === false) {
                 this.gameQuit(socket);
             }
@@ -146,7 +148,7 @@ export class AudienceServer {
             if (gameOfHost) {
                 console.log("User " + socket.id + " tried to make a game but has already one !");
                 let message = new Message(
-                    Codes.MAKE_GAME_ERROR, 
+                    Codes.MAKE_GAME_ERROR,
                     "Error, the player already created a room.");
                 socket.emit('message', message);
                 return;
@@ -220,6 +222,75 @@ export class AudienceServer {
             socket.emit('message', message);
             this.pollTimeOut(socket, +poll.duration, game.id);
         });
+        socket.on('ingredientPoll', (choices: IngredientPoll) => {
+            let game = this.gameCollection.getGameOfHost(socket.id);
+            let errorMsg = new Message(
+                Codes.LAUNCH_INGREDIENT_POLL_ERROR,
+                "Error, could not start ingredient poll");
+            if (!game) {
+                console.log("User " + socket.id + " tried to launch a poll but game is not found !");
+                socket.emit('message', errorMsg);
+                return;
+            }
+
+            let ingredientPoll = new IngredientPoll(choices.ingredients);
+            this.currentIngredientPolls.addEvent(game.id, ingredientPoll);
+            socket.to(game.pin).emit('voteForIngredient', choices);
+            let message = new Message(
+                Codes.LAUNCH_INGREDIENT_POLL_SUCCESS,
+                "Ingredient Poll successfully started’");
+            socket.emit('message', message);
+        });
+
+        socket.on('stopIngredientPoll', () => {
+            let game = this.gameCollection.getGameOfHost(socket.id);
+            let errorMsg = new Message(
+                Codes.STOP_INGREDIENT_POLL_ERROR,
+                "Error, the ingredient poll could not be stopped");
+            if (!game) {
+                console.log("User " + socket.id + " tried to launch a poll but game is not found !");
+                socket.emit('message', errorMsg);
+                return;
+            }
+            let poll = this.currentIngredientPolls.getPollByGameId(game.id);
+            socket.to(game.pin).emit('ingredientPollResults', poll);
+            this.currentIngredientPolls.removeEvent(game.id);
+            let message = new Message(
+                Codes.STOP_INGREDIENT_POLL_SUCCESS,
+                "Ingredient Poll successfully stopped’");
+            socket.emit('message', message);
+        });
+
+        socket.on('voteForIngredient', (ingredientId: number) => {
+            let errorMsg = new Message(
+                Codes.VOTE_INGREDIENT_ERROR,
+                "Error, game info not valid.");
+            if (!socket.gameId) {
+                console.log("Audience " + socket.id + " game id not valid, can't vote");
+                socket.emit('message', errorMsg);
+                return;
+            }
+            let game = this.gameCollection.getGameById(socket.gameId);
+            if (!game) {
+                console.log("Audience " + socket.id + " game not found with gameId " + socket.gameId);
+                socket.emit('message', errorMsg);
+                return;
+            }
+            let poll = this.currentIngredientPolls.getPollByGameId(game.id);
+            if (!poll) {
+                console.log("Audience " + socket.id + " poll not found with gameId " + game.id);
+                socket.emit('message', errorMsg);
+                return;
+            }
+            poll.vote(ingredientId);
+            let message = new Message(
+                Codes.VOTE_INGREDIENT_SUCCESS,
+                "Vote successfully taken into account’");
+            socket.emit('message', message);
+            console.log(game.pin);
+            this.io.in(game.pin).emit('pollResults', poll);
+        });
+
         socket.on('vote', (eventId: number) => {
             let errorMsg = new Message(
                 Codes.VOTE_ERROR,
@@ -307,8 +378,8 @@ export class AudienceServer {
                 }
                 for (let player of players.players)
                     game.addPlayer(player);
-                    game.madeGame = true;
-                    socket.to(game.pin).emit('updateGameState', game);
+                game.madeGame = true;
+                socket.to(game.pin).emit('updateGameState', game);
                 let message = new Message(
                     Codes.REGISTER_PLAYERS_SUCCESS,
                     'Players registered successfully');
@@ -319,7 +390,7 @@ export class AudienceServer {
                 let game = this.gameCollection.getGameById(id);
                 if (!game) {
                     let message = new Message(
-                        Codes.JOIN_GAME_ERROR, 
+                        Codes.JOIN_GAME_ERROR,
                         'Error, could not join the room. The room ' + id + ' does not exist.');
                     socket.emit('message', message);
                     return;
@@ -355,12 +426,11 @@ export class AudienceServer {
             this.spellCasting(socket);
             this.updateGameState(socket);
             this.endGame(socket);
-            
+
             socket.on('disconnect', () => {
                 if (socket.gameId) {
                     this.audienceQuit(socket);
-                }
-                else {
+                } else {
                     let game = this.gameCollection.getGameOfHost(socket.id);
                     if (game) {
                         let endGame = new EndGame();
