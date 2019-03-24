@@ -253,7 +253,7 @@ export class AudienceServer {
                 return;
             }
             let poll = this.currentIngredientPolls.getPollByGameId(game.id);
-            socket.to(game.pin).emit('ingredientPollResults', poll);
+            socket.to(game.pin).emit('stopIngredientPoll', poll);
             this.currentIngredientPolls.removeEvent(game.id);
             let message = new Message(
                 Codes.STOP_INGREDIENT_POLL_SUCCESS,
@@ -288,7 +288,7 @@ export class AudienceServer {
                 "Vote successfully taken into account’");
             socket.emit('message', message);
             console.log(game.pin);
-            this.io.in(game.pin).emit('pollResults', poll);
+            this.io.in(game.pin).emit('ingredientPollResults', poll);
         });
 
         socket.on('vote', (eventId: number) => {
