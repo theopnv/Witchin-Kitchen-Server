@@ -403,9 +403,6 @@ export class AudienceServer {
                 console.log(socket.id + " joined " + game.id);
 
                 socket.to(game.pin).emit('gameUpdate', game);
-                let poll = this.currentIngredientPolls.getPollByGameId(game.id);
-                if (poll)
-                    socket.to(game.pin).emit('voteForIngredient', poll);
                 socket.emit('joinedGame', viewer);
 
                 if (game.madeGame) {
@@ -422,6 +419,9 @@ export class AudienceServer {
                     'Viewer registered successfully'
                 );
                 socket.emit('message', answer);
+                let poll = this.currentIngredientPolls.getPollByGameId(game.id);
+                if (poll)
+                    socket.emit('voteForIngredient', poll);
             });
 
             this.makeGame(socket);
