@@ -87,6 +87,11 @@ export class AudienceServer {
         console.log('Game ' + game.pin + ' quit message sent ' + socket.id);
     }
 
+    private clearGame(gameId: number) {
+        this.currentIngredientPolls.removeEvent(gameId);
+        this.currentPolls.removeEvent(gameId);
+    }
+
     private endGame(socket: ExtendedSocket) {
         socket.on('gameOutcome', (gameOutcome: GameOutcome) => {
             let game = this.gameCollection.getGameOfHost(socket.id);
@@ -125,6 +130,7 @@ export class AudienceServer {
             if (endGame.doRematch === false) {
                 this.gameQuit(socket);
             }
+            this.clearGame(game.id);
         });
     }
 
