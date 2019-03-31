@@ -193,9 +193,11 @@ export class AudienceServer {
         let that = this;
         let cb = function () {
             let endPoll: PollChoices = that.currentPolls.getPollByGameId(gameId);
-            socket.emit('event', endPoll);
-            socket.to(Game.idAsString(gameId)).emit('pollResults', endPoll);
-            that.currentPolls.removeEvent(gameId);
+            if (endPoll) {
+                socket.emit('event', endPoll);
+                socket.to(Game.idAsString(gameId)).emit('pollResults', endPoll);
+                that.currentPolls.removeEvent(gameId);
+            }
         };
         setTimeout(cb, duration * 1000);
     }
